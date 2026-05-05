@@ -4,7 +4,7 @@
 ═══════════════════════════════════════════════════ */
 
 :root {
-  --pink:       #E8558A;
+    --pink:       #E8558A;
   --pink-light: #F2A0BF;
   --pink-pale:  #FFF0F7;
   --plum:       #371327;
@@ -14,10 +14,23 @@
   --white:      #FFFFFF;
   --border:     #F0D0E4;
   --muted:      #9C6B85;
-  --danger:     #FF2D55;
   --safe:       #34C759;
 
-  --shadow-sm:  0 2px 8px rgba(55,19,39,.06);
+
+  --bg-main: #0F0F12;
+  --bg-card: #18181C;
+  --border: #2A2A30;
+
+  --primary: #e71c8c; /* estilo Strava */
+  --primary-alt: #E8558A;
+
+  --text-main: #FFFFFF;
+  --text-muted: #A1A1AA;
+
+  --success: #22C55E;
+  --danger: #EF4444;
+
+  --shadow-sm: 0 2px 10px rgba(0,0,0,.4);
   --shadow-md:  0 6px 24px rgba(55,19,39,.10);
   --shadow-lg:  0 20px 60px rgba(55,19,39,.14);
 
@@ -33,8 +46,8 @@ html { scroll-behavior: smooth; }
 
 body {
   font-family: 'DM Sans', sans-serif;
-  background: var(--rose-bg);
-  color: var(--plum);
+  background: var(--bg-main);
+  color: var(--text-main);
   min-height: 100vh;
   /* Soft ambient gradient */
   background-image:
@@ -51,18 +64,20 @@ h3 { font-size: 1.05rem; font-weight: 700; }
   max-width: 860px;
   margin: 0 auto;
   padding: 16px 16px 40px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
 }
 
 /* ═══════════════════════════════════════
    TOPBAR
 ═══════════════════════════════════════ */
 .topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 0 8px;
-  margin-bottom: 4px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--border);
 }
+
 .topbar-left {
   display: flex;
   align-items: center;
@@ -73,14 +88,9 @@ h3 { font-size: 1.05rem; font-weight: 700; }
   filter: drop-shadow(0 2px 8px rgba(232,85,138,.3));
 }
 .app-name {
-  font-family: 'Playfair Display', serif;
-  font-size: 1.3rem;
-  font-weight: 900;
-  background: linear-gradient(135deg, #E8558A, #7C3AED);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  line-height: 1;
+  background: none;
+  -webkit-text-fill-color: white;
+  font-weight: 800;
 }
 .welcome-msg {
   font-size: 0.75rem;
@@ -134,7 +144,7 @@ h3 { font-size: 1.05rem; font-weight: 700; }
   display: flex;
   align-items: center;
   gap: 6px;
-  background: white;
+  background: rgb(0, 0, 0);
   border: 1px solid var(--border);
   border-radius: 50px;
   padding: 5px 12px;
@@ -151,14 +161,13 @@ h3 { font-size: 1.05rem; font-weight: 700; }
    CARDS
 ═══════════════════════════════════════ */
 .card {
-  background: var(--white);
+  background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 20px;
-  margin-bottom: 14px;
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow 0.2s;
+  border-radius: 14px;
+  padding: 24px;
+  box-shadow: none;
 }
+
 .card:hover { box-shadow: var(--shadow-md); }
 
 .card-header {
@@ -208,7 +217,7 @@ h3 { font-size: 1.05rem; font-weight: 700; }
 
 .route-inputs {
   flex: 1;
-  background: var(--rose-bg);
+  background: color(rgb(0, 0, 0));
   border: 1px solid var(--border);
   border-radius: var(--radius-md);
   padding: 6px 10px;
@@ -356,7 +365,7 @@ h3 { font-size: 1.05rem; font-weight: 700; }
 .tip-item {
   display: flex;
   gap: 10px;
-  background: var(--rose-bg);
+  background:color(rgb(255, 255, 255));
   border-radius: var(--radius-sm);
   padding: 12px;
 }
@@ -367,11 +376,15 @@ h3 { font-size: 1.05rem; font-weight: 700; }
    BUTTONS
 ═══════════════════════════════════════ */
 .btn-primary {
+  background: var(--primary);
+  border-radius: 10px;
+  font-weight: 700;
+  letter-spacing: .3px;
+  box-shadow: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, var(--pink), #C83C78);
   color: white;
   border: none;
   border-radius: 50px;
@@ -384,7 +397,10 @@ h3 { font-size: 1.05rem; font-weight: 700; }
   transition: transform 0.15s, box-shadow 0.15s, opacity 0.15s;
   white-space: nowrap;
 }
-.btn-primary:hover { transform: translateY(-1px); box-shadow: 0 5px 18px rgba(232,85,138,.38); }
+.btn-primary:hover {
+  filter: brightness(1.1);
+}
+
 .btn-primary:active { transform: translateY(0) scale(.98); }
 .btn-primary.full-width { width: 100%; }
 
@@ -728,4 +744,18 @@ h3 { font-size: 1.05rem; font-weight: 700; }
   .glass-card { padding: 24px 20px; border-radius: var(--radius-lg); }
   .login-title { font-size: 1.8rem; }
   .map-container { height: 240px; }
+}
+
+
+
+.map-container {
+  position: relative;
+}
+
+.map-container::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0,0,0,.4), transparent);
+  pointer-events: none;
 }
