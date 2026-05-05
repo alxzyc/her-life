@@ -161,15 +161,26 @@ async function definirRota() {
     // Draw route
     if (state.routeLayer) state.map.removeLayer(state.routeLayer);
 
-    const points = [fromCoords, toCoords];
-    state.routeLayer = L.polyline(points, {
-      color: '#34C759',
-      weight: 5,
-      opacity: 0.85,
-      dashArray: '12,8',
-      lineCap: 'round',
-    }).addTo(state.map);
+const routeCoords = await getRoute(fromCoords, toCoords);
 
+if (state.routeLayer) state.map.removeLayer(state.routeLayer);
+
+if (routeCoords) {
+  state.routeLayer = L.polyline(routeCoords, {
+    color: '#FC4C02',
+    weight: 5,
+    opacity: 0.9,
+  }).addTo(state.map);
+} else {
+  // fallback (linha simples)
+  state.routeLayer = L.polyline([fromCoords, toCoords], {
+    color: '#999',
+    weight: 4,
+    dashArray: '6,6'
+  }).addTo(state.map);
+
+  toast('Usando rota simples (API indisponível)');
+}
     // Markers
     const fromIcon = makeRouteIcon('#34C759', 'A');
     const toIcon   = makeRouteIcon('#E8558A', 'B');
@@ -182,12 +193,48 @@ async function definirRota() {
 
     toast(`Rota traçada: ${from} → ${to}`);
   } catch (err) {
-    console.error(err);
-    toast('Erro ao traçar rota. Verifique sua conexão.');
+  console.error('Erro real da rota:', err);
+  toast('Erro ao traçar rota.');
+  }
+
+  async function geocode(address) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
+
+  const res  = await fetch(url, {
+    headers: { 'Accept-Language': 'pt-BR' }
+  });
+
+  const data = await res.json();
+
+  if (!data.length) return null;
+
+  return [parseFloat(data[0].lat), parseFloat(data[0].lon)];
+}
+async function getRoute(from, to) {
+  try {
+    const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+
+    const res = await fetch(url);
+
+    if (!res.ok) {
+      console.error('Erro HTTP:', res.status);
+      return null;
+    }
+
+    const data = await res.json();
+
+    if (!data.routes || !data.routes.length) {
+      console.error('Sem rota encontrada:', data);
+      return null;
+    }
+
+    return data.routes[0].geometry.coordinates.map(c => [c[1], c[0]]);
+  } catch (err) {
+    console.error('Erro no getRoute:', err);
+    return null;
   }
 }
 
-async function geocode(address) {
   const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&limit=1`;
   const res  = await fetch(url, { headers: { 'Accept-Language': 'pt-BR' } });
   const data = await res.json();
