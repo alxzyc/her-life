@@ -10,6 +10,13 @@ const state = {
   userMarker: null,
   routeLayer: null,
   userLatLng: null,
+
+  activity: {
+  active: false,
+  path: [],
+  watchId: null,
+  startTime: null
+}
 };
 
 /* ─── Toast ─── */
@@ -440,3 +447,233 @@ window.addEventListener('DOMContentLoaded', () => {
     this.value = v;
   });
 });
+
+
+// começar atividade
+
+function startActivity() {
+  if (!navigator.geolocation) {
+    toast('Geolocalização não suportada.');
+    return;
+  }
+
+  // evita bug de estado travado
+  if (state.activity.active) {
+    toast('Já existe uma atividade em andamento.');
+    return;
+  }
+
+  // limpa qualquer resto antigo
+  if (state.activity.watchId) {
+    navigator.geolocation.clearWatch(state.activity.watchId);
+  }
+
+  state.activity = {
+    active: true,
+    path: [],
+    watchId: null,
+    startTime: Date.now()
+  };
+
+  toast('Atividade iniciada 🚀');
+
+  state.activity.watchId = navigator.geolocation.watchPosition(
+    (pos) => {
+
+      updateActivityUI();
+
+      const { latitude, longitude } = pos.coords;
+      const point = [latitude, longitude];
+
+      state.activity.path.push(point);
+
+    if (state.activity.path.length % 5 === 0) {
+  sendWhatsAppLocation(latitude, longitude);
+}
+
+      drawActivityPath();
+    },
+    (err) => {
+      console.error(err);
+      toast('Erro ao rastrear localização.');
+    },
+    {
+      enableHighAccuracy: true,
+      maximumAge: 0,
+      timeout: 10000
+    }
+  );
+}
+
+  // parar ativadade
+
+ function stopActivity() {
+  if (!state.activity.active) {
+    toast('Nenhuma atividade em andamento.');
+    return;
+  }
+
+  if (state.activity.watchId) {
+    navigator.geolocation.clearWatch(state.activity.watchId);
+  }
+
+  state.activity.active = false;
+  state.activity.watchId = null;
+
+  const duration = Math.floor((Date.now() - state.activity.startTime) / 1000);
+
+  toast(`Atividade finalizada (${duration}s)`);
+
+  console.log('Caminho:', state.activity.path);
+
+  const distance = calculateDistance(state.activity.path);
+
+  toast(`Distância: ${(distance/1000).toFixed(2)} km`);
+}
+
+// trajeto
+
+function drawActivityPath() {
+  if (state.routeLayer) {
+    state.map.removeLayer(state.routeLayer);
+  }
+
+  state.routeLayer = L.polyline(state.activity.path, {
+    color: '#FC4C02',
+    weight: 5
+  }).addTo(state.map);
+}
+
+// calcular distancia 
+
+function calculateDistance(path) {
+  let total = 0;
+
+  for (let i = 1; i < path.length; i++) {
+    const [lat1, lon1] = path[i - 1];
+    const [lat2, lon2] = path[i];
+
+    const R = 6371e3;
+    const φ1 = lat1 * Math.PI/180;
+    const φ2 = lat2 * Math.PI/180;
+    const Δφ = (lat2-lat1) * Math.PI/180;
+    const Δλ = (lon2-lon1) * Math.PI/180;
+
+    const a =
+      Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+      Math.cos(φ1) * Math.cos(φ2) *
+      Math.sin(Δλ/2) * Math.sin(Δλ/2);
+
+    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+    total += R * c;
+  }
+
+  return total; // metros
+}
+
+// enviar localização para contatos
+
+function sendWhatsAppLocation(lat, lng) {
+  const message = `🚨 Estou em atividade no Her Life.\n\nMinha localização:\nhttps://www.google.com/maps?q=${lat},${lng}`;
+
+  state.contacts.forEach(c => {
+    const phone = c.phone.replace(/\D/g, ''); // só números
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, '_blank');
+  });
+}
+
+// botao de compartilhar localização
+
+function shareLocationNow() {
+  if (!state.userLatLng) {
+    toast('Localização não disponível.');
+    return;
+  }
+
+  if (!state.contacts.length) {
+    toast('Adicione contatos antes de compartilhar.');
+    return;
+  }
+
+  const [lat, lng] = state.userLatLng;
+
+  const message = `📍 Minha localização atual:\nhttps://www.google.com/maps?q=${lat},${lng}`;
+
+  state.contacts.forEach(c => {
+    const phone = c.phone.replace(/\D/g, '');
+    const url = `https://wa.me/${phone}?text=${encodeURIComponent(message)}`;
+
+    window.open(url, '_blank');
+  });
+
+  toast('Localização compartilhada!');
+}
+
+// atualização
+
+function updateActivityUI() {
+  const panel = document.getElementById('activity-panel');
+
+  if (!state.activity.active) {
+    panel.style.display = 'none';
+    return;
+  }
+
+  const speed = calculateSpeed(state.activity.path);
+  const safeSpeed = speed > 50 ? 0 : speed; // ignora valores absurdos
+  document.getElementById('activity-speed').textContent =
+  `${safeSpeed.toFixed(1)} km/h`;
+
+  panel.style.display = 'block';
+
+  // tempo
+  const seconds = Math.floor((Date.now() - state.activity.startTime) / 1000);
+  const min = Math.floor(seconds / 60);
+  const sec = seconds % 60;
+
+  document.getElementById('activity-time').textContent =
+    `${min}:${sec.toString().padStart(2, '0')}`;
+
+  // distância
+  const dist = calculateDistance(state.activity.path);
+  document.getElementById('activity-distance').textContent =
+    `${(dist / 1000).toFixed(2)} km`;
+}
+
+// velocidade em tempo real 
+
+function calculateSpeed(path) {
+  if (path.length < 2) return 0;
+
+  const last = path[path.length - 1];
+  const prev = path[path.length - 2];
+
+  const [lat1, lon1] = prev;
+  const [lat2, lon2] = last;
+
+  const R = 6371e3;
+  const φ1 = lat1 * Math.PI/180;
+  const φ2 = lat2 * Math.PI/180;
+  const Δφ = (lat2-lat1) * Math.PI/180;
+  const Δλ = (lon2-lon1) * Math.PI/180;
+
+  const a =
+    Math.sin(Δφ/2) * Math.sin(Δφ/2) +
+    Math.cos(φ1) * Math.cos(φ2) *
+    Math.sin(Δλ/2) * Math.sin(Δλ/2);
+
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+
+  const distance = R * c; // metros
+
+  const time = 5; // segundos (aprox entre updates GPS)
+
+  const speed = distance / time; // m/s
+
+  return speed * 3.6; // km/h
+}
+
+setInterval(updateActivityUI, 1000);
