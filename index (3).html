@@ -278,6 +278,36 @@
 
   <div id="toast" class="toast"></div>
 
+  <script type="module">
+
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+
+import {
+  getDatabase,
+  ref,
+  set,
+  onValue
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD-v3p7ITvbKaNsJMYa4sJuFJAduaWPyx4",
+  authDomain: "her-life.firebaseapp.com",
+  databaseURL: "SUA_DATABASE_URL",
+  projectId: "her-life",
+  storageBucket: "her-life.firebasestorage.app",
+  messagingSenderId: "894693859147",
+  appId: "1:894693859147:web:eb4b7303d542bf4c50d2ce"
+};
+
+const app = initializeApp(firebaseConfig);
+
+window.db = getDatabase(app);
+window.dbRef = ref;
+window.dbSet = set;
+window.dbOnValue = onValue;
+
+</script>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
 </body>
