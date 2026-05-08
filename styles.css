@@ -277,6 +277,8 @@ h3 { font-size: 1rem; letter-spacing: 0.06em; }
   border: 1px solid var(--border);
   overflow: hidden;
   position: relative;
+  z-index: 0;
+  isolation: isolate;
   background: #0a0a0e;
 }
 .map-container::after {
@@ -287,6 +289,8 @@ h3 { font-size: 1rem; letter-spacing: 0.06em; }
   pointer-events: none;
   z-index: 1;
 }
+
+.map-card { overflow: hidden; }
 
 .map-card .btn-primary,
 .map-card .btn-ghost { display: inline-flex; width: auto; margin: 0 6px 8px 0; }
@@ -810,7 +814,7 @@ h3 { font-size: 1rem; letter-spacing: 0.06em; }
 .leaflet-marker-pane     { z-index: 5 !important; }
 .leaflet-tooltip-pane    { z-index: 6 !important; }
 .leaflet-popup-pane      { z-index: 7 !important; }
-.leaflet-control-container { z-index: 8 !important; }
+.leaflet-control-container { z-index: 2 !important; }
 
 /* ═══════════════════════════════════════
    RESPONSIVE
