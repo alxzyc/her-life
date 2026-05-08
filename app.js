@@ -457,6 +457,14 @@ function startActivity() {
     return;
   }
 
+  state.activity.liveId = generateLiveId();
+
+const liveUrl =
+ `${window.location.origin}/live.html?id=${state.activity.liveId}`;
+
+toast('Link de rastreamento criado!');
+console.log(liveUrl);
+
   // evita bug de estado travado
   if (state.activity.active) {
     toast('Já existe uma atividade em andamento.');
@@ -479,6 +487,17 @@ function startActivity() {
 
   state.activity.watchId = navigator.geolocation.watchPosition(
     (pos) => {
+
+dbSet(
+  dbRef(window.db, 'liveLocations/' + state.activity.liveId),
+  {
+    name: state.user.name,
+    lat: latitude,
+    lng: longitude,
+    updatedAt: Date.now(),
+    active: true
+  }
+);
 
       updateActivityUI();
 
@@ -677,3 +696,9 @@ function calculateSpeed(path) {
 }
 
 setInterval(updateActivityUI, 1000);
+
+
+function generateLiveId() {
+  return Math.random().toString(36).substring(2, 8).toUpperCase();
+}
+
