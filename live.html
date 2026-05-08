@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Her Life — Localização em tempo real</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="stylesheet" href="styles.css" />
+  <style>
+    body { padding: 16px; }
+    .live-wrap { max-width: 900px; margin: 0 auto; }
+    .live-map { height: 70vh; border-radius: 12px; border:1px solid rgba(255,255,255,.1); overflow:hidden; }
+    .live-meta { margin: 10px 0 14px; color: #fff; }
+  </style>
+</head>
+<body>
+  <div class="live-wrap">
+    <h2>Rastreamento em tempo real</h2>
+    <div id="live-status" class="live-meta">Aguardando localização…</div>
+    <div id="live-map" class="live-map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const params = new URLSearchParams(location.search);
+    const email = params.get('email');
+    const statusEl = document.getElementById('live-status');
+
+    const map = L.map('live-map').setView([-16.6869, -49.2648], 14);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 19,
+      attribution: '&copy; OpenStreetMap'
+    }).addTo(map);
+
+    let marker;
+    let path = [];
+    let polyline;
+
+    async function updateLive() {
+      if (!email) {
+        statusEl.textContent = 'URL inválida. Use ?email=...';
+        return;
+      }
+      try {
+        const res = await fetch(`/.netlify/functions/get-locations?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+        const updates = data.updates || [];
+        if (!updates.length) {
+          statusEl.textContent = 'Sem localizações registradas ainda.';
+          return;
+        }
+
+        const latest = updates[0];
+        const latlng = [latest.latitude, latest.longitude];
+        const date = new Date(latest.timestamp);
+
+        if (!marker) {
+          marker = L.marker(latlng).addTo(map);
+        } else {
+          marker.setLatLng(latlng);
+        }
+
+        path = updates.slice().reverse().map((u) => [u.latitude, u.longitude]);
+        if (polyline) map.removeLayer(polyline);
+        polyline = L.polyline(path, { color: '#FC4C02', weight: 4 }).addTo(map);
+
+        map.setView(latlng, 16);
+        statusEl.textContent = `Última atualização: ${date.toLocaleString('pt-BR')} • Origem: ${latest.source}`;
+      } catch (e) {
+        statusEl.textContent = 'Erro ao atualizar localização em tempo real.';
+      }
+    }
+
+    updateLive();
+    setInterval(updateLive, 5000);
+  </script>
+</body>
+</html>

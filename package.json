@@ -1,0 +1,22 @@
+{
+  "name": "her-life",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Her Life web app pronta para deploy no Netlify e empacotamento Android com Capacitor",
+  "scripts": {
+    "dev": "npx serve . -l 5173",
+    "build": "echo 'Static app: sem etapa de build'",
+    "android:init": "npx cap add android",
+    "android:sync": "npx cap sync android",
+    "android:open": "npx cap open android"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/cli": "^7.0.0",
+    "@capacitor/core": "^7.0.0",
+    "@netlify/blobs": "^8.1.0"
+  },
+  "devDependencies": {
+    "serve": "^14.2.4"
+  }
+}
