@@ -49,3 +49,17 @@ Depois disso, o projeto Android abrirá no Android Studio para gerar APK/AAB.
 - `styles.css` — estilos
 - `capacitor.config.json` — configuração do app Android
 - `netlify.toml` — configuração de deploy no Netlify
+
+## 4) Salvamento de localização no back-end (Netlify Functions)
+
+Agora o app salva localização no back-end através de funções serverless:
+
+- `/.netlify/functions/save-location` (POST)
+- `/.netlify/functions/get-locations?email=...` (GET)
+
+Persistência é feita usando **Netlify Blobs** (store `locations`).
+
+A localização é salva automaticamente quando:
+- mapa encontra posição inicial,
+- usuário compartilha localização,
+- atividade está em andamento.

@@ -35,6 +35,26 @@ function escapeHtml(str = '') {
     .replace(/"/g, '&quot;');
 }
 
+
+async function saveLocationToBackend(latitude, longitude, source = 'manual') {
+  try {
+    await fetch('/.netlify/functions/save-location', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userEmail: state.user?.email || 'anon@herlife.local',
+        userName: state.user?.name || 'Usuária',
+        latitude,
+        longitude,
+        source,
+        timestamp: Date.now()
+      })
+    });
+  } catch (err) {
+    console.warn('Falha ao salvar localização no backend:', err);
+  }
+}
+
 function loginApp() {
   const name = document.getElementById('login-name').value.trim();
   const email = document.getElementById('login-email').value.trim().toLowerCase();
@@ -87,6 +107,7 @@ function refreshUserLocation() {
       state.map.setView(state.userLatLng, 15);
       document.getElementById('chip-location-text').textContent = 'Localização ativa';
       document.getElementById('chip-location').classList.add('active');
+      saveLocationToBackend(latitude, longitude, 'map-init');
     },
     () => {
       addDefaultMarker([-16.6869, -49.2648]);
@@ -242,7 +263,11 @@ function sendWhatsAppLocation(lat, lng) {
 
 function shareLocationNow() {
   if (!state.contacts.length) return toast('Adicione contatos antes de compartilhar.');
-  const share = (lat, lng) => { sendWhatsAppLocation(lat, lng); toast('Localização compartilhada!'); };
+  const share = (lat, lng) => {
+    sendWhatsAppLocation(lat, lng);
+    saveLocationToBackend(lat, lng, 'share-now');
+    toast('Localização compartilhada!');
+  };
 
   if (state.userLatLng) return share(state.userLatLng[0], state.userLatLng[1]);
   if (!navigator.geolocation) return toast('Geolocalização não suportada.');
@@ -306,6 +331,7 @@ function startActivity() {
     const { latitude, longitude } = pos.coords;
     state.userLatLng = [latitude, longitude];
     state.activity.path.push([latitude, longitude]);
+    saveLocationToBackend(latitude, longitude, 'activity');
     drawActivityPath();
     updateActivityUI();
 
