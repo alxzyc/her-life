@@ -63,3 +63,22 @@ A localização é salva automaticamente quando:
 - mapa encontra posição inicial,
 - usuário compartilha localização,
 - atividade está em andamento.
+
+## 5) Página de rastreamento em tempo real
+
+Foi criada a página `live.html`, que consulta `get-locations` a cada 5 segundos e atualiza mapa/trilha em tempo real.
+
+Use:
+
+```text
+/live.html?email=usuario@email.com
+```
+
+## 6) SOS com câmera + microfone e notificação de emergência
+
+Ao acionar SOS:
+- app solicita ativação automática de câmera e microfone;
+- salva localização no backend (`source: sos`);
+- envia mensagem de emergência para contatos (WhatsApp) com:
+  - link do mapa,
+  - link da página `live.html` para acompanhamento em tempo real.

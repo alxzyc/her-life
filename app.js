@@ -243,14 +243,64 @@ function renderContacts() {
   el.innerHTML = state.contacts.map((c) => `<div class="contact-item"><div class="contact-avatar">${escapeHtml(c.name.charAt(0).toUpperCase())}</div><div class="contact-info"><div class="contact-name">${escapeHtml(c.name)}</div><div class="contact-details">${escapeHtml(c.phone)} · ${escapeHtml(c.email)}</div></div><div class="contact-right"><span class="priority-badge ${c.priority}">${c.priority.toUpperCase()}</span><button class="btn-delete" onclick="removeContact(${c.id})">🗑️</button></div></div>`).join('');
 }
 
+
+let emergencyStream = null;
+
+async function startEmergencyMedia() {
+  try {
+    emergencyStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+    toast('Câmera e microfone ativados para emergência.');
+  } catch (err) {
+    console.warn('Permissão de câmera/microfone negada:', err);
+    toast('Não foi possível ativar câmera/microfone. Verifique permissões.');
+  }
+}
+
+function stopEmergencyMedia() {
+  if (!emergencyStream) return;
+  emergencyStream.getTracks().forEach((t) => t.stop());
+  emergencyStream = null;
+}
+
+function notifyEmergencyContacts(lat, lng) {
+  const liveUrl = `${window.location.origin}/live.html?email=${encodeURIComponent(state.user?.email || 'anon@herlife.local')}`;
+  const msg = `🚨 SOS HER LIFE!\n\nA ajuda foi acionada e câmera/microfone foram ativados automaticamente.\nLocalização: https://www.google.com/maps?q=${lat},${lng}\nRastreamento em tempo real: ${liveUrl}`;
+
+  state.contacts.forEach((c) => {
+    const phone = c.phone.replace(/\D/g, '');
+    if (!phone) return;
+    window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
+  });
+}
+
 function activateSOS() {
   if (!state.user) return toast('Faça login para ativar o SOS.');
   if (!state.contacts.length) return toast('Adicione contatos antes de usar o SOS.');
   const list = document.getElementById('sos-contacts-sent');
+
+  const triggerEmergencyActions = (lat, lng) => {
+    saveLocationToBackend(lat, lng, 'sos');
+    notifyEmergencyContacts(lat, lng);
+  };
+
+  if (state.userLatLng) {
+    triggerEmergencyActions(state.userLatLng[0], state.userLatLng[1]);
+  } else if (navigator.geolocation) {
+    navigator.geolocation.getCurrentPosition((pos) => {
+      const { latitude, longitude } = pos.coords;
+      state.userLatLng = [latitude, longitude];
+      triggerEmergencyActions(latitude, longitude);
+    });
+  }
+
+  startEmergencyMedia();
   list.innerHTML = state.contacts.map((c) => `<div class="sos-contact-chip"><span><strong>${escapeHtml(c.name)}</strong> · ${escapeHtml(c.phone)}</span></div>`).join('');
   document.getElementById('sos-modal').classList.add('open');
 }
-function closeSosModal() { document.getElementById('sos-modal').classList.remove('open'); }
+function closeSosModal() {
+  document.getElementById('sos-modal').classList.remove('open');
+  stopEmergencyMedia();
+}
 
 function sendWhatsAppLocation(lat, lng) {
   const message = `📍 Minha localização: https://www.google.com/maps?q=${lat},${lng}`;
