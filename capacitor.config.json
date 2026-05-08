@@ -1,0 +1,8 @@
+{
+  "appId": "com.herlife.app",
+  "appName": "Her Life",
+  "webDir": ".",
+  "server": {
+    "androidScheme": "https"
+  }
+}
